@@ -2,13 +2,13 @@ from playlist_lib import *
 
 # daily_mixes = [1, 2, 3, 4, 5, 6]
 # feel_mixes = ["Moody", "Chill", "Upbeat", "Happy", "Romantic"]
-# genre_mixes = ["Rock", "Punk", "Indie", "Metal", "Blues", "Pop", "Folk & Acoustic Mix"]
+# genre_mixes = ["Rock", "Punk", "Indie", "Metal", "Blues", "Pop", "Folk & Acoustic"]
 # year_mixes = [2010, 2000, 90, 80, 70, 60]
 # playlist_names = ["queue"]
 
 daily_mixes = [1, 2, 3, 4, 5, 6]
 feel_mixes = ["Moody", "Chill", "Upbeat", "Happy"]
-genre_mixes = ["Rock", "Punk", "Indie", "Metal", "Blues", "Folk & Acoustic Mix"]
+genre_mixes = ["Rock", "Punk", "Indie", "Metal", "Blues", "Folk & Acoustic"]
 year_mixes = [2010, 2000, 90, 80, 70]
 playlist_names = ["queue"]
 
