@@ -15,7 +15,7 @@ def _is_available(track):
 
 
 def _print_percent(percent: float, length=30):
-    print(f"[{(min(round(length * percent), length) * '=').ljust(length)}] {min(percent*100, 100):4.2f}%", end="\r")
+    print(f"[{(min(round(length * percent), length) * '=').ljust(length)}] {min(percent*100, 100):6.2f}%", end="\r")
 
 
 def get_random_liked(n):
@@ -96,11 +96,15 @@ def _different_artists(track1, track2):
 
 
 def remove_duplicates(tracks):
-    unique = []
+    print(f"Removing duplicates:")
+    n, unique = len(tracks), []
     while tracks:
+        _print_percent((n - len(tracks)) / n)
         track = tracks.pop()
         if all([track["name"] != added["name"] or _different_artists(track, added) for added in unique]):
             unique.append(track)
+    _print_percent(1)
+    print("\n")
     return unique
 
 
