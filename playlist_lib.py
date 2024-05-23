@@ -99,7 +99,7 @@ def remove_duplicates(tracks):
     unique = []
     while tracks:
         track = tracks.pop()
-        if all([track["name"] != added["name"] and _different_artists(track, added) for added in unique]):
+        if all([track["name"] != added["name"] or _different_artists(track, added) for added in unique]):
             unique.append(track)
     return unique
 
@@ -110,12 +110,15 @@ def shuffle_tracks(tracks):
 
 
 def create_playlist(name, tracks):
+    print(f"Uploading tracks to the {name}:")
     playlist = client.user_playlist_create(client.current_user()["id"], name, False)
     uris = [track["uri"] for track in tracks]
     chunks = [uris[i : i + 100] for i in range(0, len(uris), 100)]
-    for chunk in chunks:
+    for i, chunk in enumerate(chunks):
+        _print_percent(i / len(chunks))
         client.playlist_add_items(playlist["id"], chunk)
-
+    _print_percent(1)
+    print("\n")
 
 def generate_names(playlist_names: list[str], daily_mixes, feel_mixes, genre_mixes, year_mixes):
     names = playlist_names.copy()
