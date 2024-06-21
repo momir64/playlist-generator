@@ -3,6 +3,7 @@ from spotipy.oauth2 import SpotifyOAuth
 from time import sleep
 import logging
 import spotipy
+import json
 
 
 _scope = "playlist-read-private, playlist-modify-private, user-library-read"
@@ -14,11 +15,12 @@ def _is_available(track):
     return not track["available_markets"] or "RS" in track["available_markets"]
 
 
-def _print_percent(percent: float, length=30):
+def _print_percent(part: int, overall: int = 0, length: int = 30):
+    percent = part if not overall else part / overall
     print(f"[{(min(round(length * percent), length) * '=').ljust(length)}] {min(percent*100, 100):6.2f}%", end="\r")
 
 
-def get_random_liked(n):
+def _download_random_liked(n):
     print(f"Downloading {n} random liked songs:")
     total = client.current_user_saved_tracks()["total"] - 50
     random_liked, offsets = [], set()
@@ -41,10 +43,34 @@ def get_random_liked(n):
             if all([track["artists"][0]["name"] != other["artists"][0]["name"] for other in liked]) and _is_available(track):
                 random_liked.append(track)
 
-        _print_percent(len(random_liked) / n)
+        _print_percent(len(random_liked), n)
         if len(random_liked) >= n:
             print("\n")
             return random_liked[:n]
+
+
+def _format_tracks(tracks):
+    return [{"id": track["uri"].split(":")[-1],
+             "uri":  track["uri"],
+             "name":  track["track"],
+             "artists": [{"name": track["artist"]}]}
+            for track in tracks]
+
+
+def _read_random_liked(n):
+    with open("data/YourLibrary.json", encoding="utf8") as f:
+        tracks = json.load(f)["tracks"]
+        shuffle(tracks)
+        return remove_duplicates(_format_tracks(tracks[:n * 3 // 2]))[:n]
+
+
+def get_random_liked(n):
+    try:
+        return _download_random_liked(n)
+    except:
+        print("Unable to download liked songs...")
+        print("Reading from local json...")
+        return _read_random_liked(n)
 
 
 def get_from_playlists(names):
@@ -56,13 +82,13 @@ def get_from_playlists(names):
             print(f"Downloading songs from playlist {playlist["name"]}:")
             tracks = client.playlist_tracks(playlist["uri"])
             while tracks:
-                _print_percent(tracks["offset"] / tracks["total"])
+                _print_percent(tracks["offset"], tracks["total"])
                 all_tracks.extend([track["track"] for track in tracks["items"] if _is_available(track["track"])])
                 tracks = client.next(tracks) if tracks["next"] else None
             _print_percent(1)
             print("\n")
         playlists = client.next(playlists) if playlists["next"] else None
-        
+
     return all_tracks
 
 
@@ -76,7 +102,7 @@ def get_random_from_playlist(name, n):
             tracks = client.playlist_tracks(playlist_uri)
             while tracks:
                 all_tracks.extend([track["track"] for track in tracks["items"] if _is_available(track["track"])])
-                _print_percent(tracks["offset"] / tracks["total"])
+                _print_percent(tracks["offset"], tracks["total"])
                 tracks = client.next(tracks) if tracks["next"] else None
             _print_percent(1)
             print("\n")
@@ -88,7 +114,16 @@ def get_random_from_playlist(name, n):
 
 
 def remove_not_liked(tracks):
-    return [track for track in tracks if client.current_user_saved_tracks_contains([track["id"]])[0]]
+    print(f"Removing not liked:")
+    chunks, liked = [tracks[i: i + 50] for i in range(0, len(tracks), 50)], []
+    for i, chunk in enumerate(chunks):
+        is_liked = client.current_user_saved_tracks_contains([track["id"] for track in chunk])
+        tracks_liked = [(chunk[i], is_liked[i]) for i in range(0, len(chunk))]
+        liked.extend([track[0] for track in tracks_liked if track[1]])
+        _print_percent(i, len(chunks))
+    _print_percent(1)
+    print("\n")
+    return liked
 
 
 def _different_artists(track1, track2):
@@ -99,7 +134,7 @@ def remove_duplicates(tracks):
     print(f"Removing duplicates:")
     n, unique = len(tracks), []
     while tracks:
-        _print_percent((n - len(tracks)) / n)
+        _print_percent((n - len(tracks)), n)
         track = tracks.pop()
         if all([track["name"] != added["name"] or _different_artists(track, added) for added in unique]):
             unique.append(track)
@@ -117,17 +152,22 @@ def create_playlist(name, tracks):
     print(f"Uploading tracks to the {name}:")
     playlist = client.user_playlist_create(client.current_user()["id"], name, False)
     uris = [track["uri"] for track in tracks]
-    chunks = [uris[i : i + 100] for i in range(0, len(uris), 100)]
+    chunks = [uris[i: i + 100] for i in range(0, len(uris), 100)]
     for i, chunk in enumerate(chunks):
-        _print_percent(i / len(chunks))
+        _print_percent(i, len(chunks))
         client.playlist_add_items(playlist["id"], chunk)
     _print_percent(1)
     print("\n")
 
+
+def generate_name(values: list[str]):
+    return [f"{value} Mix" for value in values]
+
+
 def generate_names(playlist_names: list[str], daily_mixes, feel_mixes, genre_mixes, year_mixes):
     names = playlist_names.copy()
     names += [f"Daily Mix {day}" for day in daily_mixes]
-    names += [f"{feel} Mix" for feel in feel_mixes]
-    names += [f"{genre} Mix" for genre in genre_mixes]
-    names += [f"{year}s Mix" for year in year_mixes]
+    names += generate_name(genre_mixes)
+    names += generate_name(feel_mixes)
+    names += generate_name(year_mixes)
     return names
