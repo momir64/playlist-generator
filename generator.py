@@ -14,13 +14,12 @@ playlist_names = ["queue"]
 
 all_names = generate_names(playlist_names, daily_mixes, feel_mixes, genre_mixes, year_mixes)
 
-tracks = get_random_liked(300)
+tracks = get_random_liked(450)
 tracks.extend(get_from_playlists(all_names))
 tracks.extend(remove_not_liked(get_from_playlists(["Romantic Mix"])))
-tracks.extend(get_random_from_playlist("Southern Gothic", 100))
-tracks.extend(get_random_from_playlist("Southern Gothic/Dark Western", 30))
+tracks.extend(get_random_from_playlist("Dark country gothic", 120))
 tracks.extend(get_random_from_playlist("Discover Weekly", 10))
-tracks.extend(get_random_from_playlist("Domaće", 100))
+tracks.extend(get_random_from_playlist("Domaće", 35))
 tracks = remove_duplicates(tracks)
 tracks = shuffle_tracks(tracks)
 
