@@ -169,5 +169,5 @@ def generate_names(playlist_names: list[str], daily_mixes, feel_mixes, genre_mix
     names += [f"Daily Mix {day}" for day in daily_mixes]
     names += generate_name(genre_mixes)
     names += generate_name(feel_mixes)
-    names += generate_name(year_mixes)
+    names += [f"{year}s Mix" for year in year_mixes]
     return names
