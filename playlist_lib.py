@@ -78,7 +78,7 @@ def get_from_playlists(names):
     all_tracks = []
 
     while playlists:
-        for playlist in [playlist for playlist in playlists["items"] if playlist["name"] in names]:
+        for playlist in [playlist for playlist in playlists["items"] if playlist and playlist["name"] in names]:
             print(f"Downloading songs from playlist {playlist["name"]}:")
             tracks = client.playlist_tracks(playlist["uri"])
             while tracks:
